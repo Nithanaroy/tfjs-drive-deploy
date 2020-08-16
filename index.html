@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <h1>3 Multiplier Model (Demo)</h1>
+        <p>This is a live deomstration of a Tensorflow JS ML model running inside a browser that is loaded from Google
+            Drive and deployed with Google App script for secured access.
+            Read <a href="https://bit.ly/tfjs-model-drive-deploy"
+                target="_blank">https://bit.ly/tfjs-model-drive-deploy</a> to learn more about how this was built.
+        </p>
+        <div class="form-inline">
+            <div class="form-group">
+                <span class="mr-2">3 x</span>
+                <input type="number" class="form-control" oninput="predict()" id="inp" />
+                <span class="mx-2">=</span>
+                <span id="result">15</span>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.1.0/dist/tf.min.js"></script>
+        <script>
+            const inpCtrl = document.getElementById("inp");
+            const predOpContainer = document.getElementById("result");
+            const [MEAN, STD] = [18.313432835820894, 559.169165361611]; // normalization constants from training
+
+            let model = null;
+            function onFailure(error) {
+                console.error(error);
+            }
+
+            function showAlert(msg, type = "info") {
+                alert(msg)
+            }
+
+            async function loadModel() {
+                google.script.run.withSuccessHandler(async modelFiles => {
+                    const modelJson = new File([modelFiles[0]], "model.json", { type: "application/json" })
+                    const modelWeights = new File([Uint8Array.from(modelFiles[1])], "group1-shard1of1.bin")
+                    model = await tf.loadLayersModel(tf.io.browserFiles([modelJson, modelWeights]))
+                    model.summary();
+                }).withFailureHandler((error) => {
+                    onFailure(error);
+                }).loadModelFromDrive();
+            }
+
+            function normalizeInput(x) {
+                return (x - MEAN) / STD;
+            }
+
+            function predict() {
+                const x = normalizeInput(parseFloat(inpCtrl.value));
+                if (model !== null) {
+                    const yHat = model.predict([tf.tensor(x).reshape([1, 1])]);
+                    predOpContainer.innerText = yHat.dataSync()[0];
+                } else {
+                    showAlert("The model is being downloaded. Please try again in a few seconds. If it is taking more time, please reach out on ...", "warning")
+                }
+            }
+
+            loadModel();
+        </script>
+</body>
+
+</html>
