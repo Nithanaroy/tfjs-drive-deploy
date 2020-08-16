@@ -1,0 +1,3 @@
+# Securely deploy your Tensorflow JS model
+
+You created an amazing ML model and would like to show it to a selected group of your friends / colleagues to get their feedback, before a big public launch. In https://bit.ly/tfjs-model-drive-deploy article I shared a 4 step recipe of how to achieve the same easily using the free Google app script and Google drive services. This is the supporting code for that article.
